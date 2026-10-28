@@ -1,0 +1,5 @@
+{
+  "linkedin": "/abs/path/to/linkedin_senior_jobs_YYYY-MM-DD.json",
+  "structured": "/abs/path/to/jobs_structured.csv",
+  "official": "/abs/path/to/jobs_official_filtered.csv"
+}

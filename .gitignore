@@ -1,0 +1,4 @@
+.DS_Store
+# 本地三源真实路径配置（含私人数据目录），不入库
+scripts/sources.local.json
+node_modules/
