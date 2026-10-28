@@ -2,7 +2,7 @@
 
 高级软件工程师职位描述（JD）数据集 + 在线检索站。
 
-**在线浏览：<https://bing2030.github.io/SWE-JD-Markeplace/>**
+**在线浏览：<https://bing2030.github.io/SWE-JD-Marketplace/>**
 
 ## 是什么
 
