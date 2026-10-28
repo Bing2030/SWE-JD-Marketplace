@@ -83,6 +83,12 @@ BANNED_FIELDS = ["is_target", "keep", "filter_reason", "senior_fit",
                  "_file", "source_file", "jd_len", "city_clean", "city_norm",
                  "jd_hash", "category_url", "query", "_source_file"]
 
+# 偏离岗位剔除（2026-10-28 用户审阅线上列表后指定；标题小写子串匹配）
+TITLE_EXCLUDE_KEYWORDS = [
+    "外包", "嵌入式", "项目经理", "camera", "cmu", "解决方案", "客户端",
+    "consultant", "产品经理", "自动化设备", "digital architect",
+]
+
 
 # ---------------------------------------------------------------- helpers
 
@@ -206,6 +212,21 @@ def is_senior_of(level):
     if level in JUNIOR_LEVELS:
         return False
     return None  # unknown
+
+
+def exclude_by_title(jobs):
+    """Drop jobs whose title contains an excluded keyword (lowercase substring).
+    Returns (kept_jobs, Counter by first matching keyword)."""
+    kept, counts = Counter(), Counter()
+    kept = []
+    for j in jobs:
+        t = j["title"].lower()
+        hit = next((k for k in TITLE_EXCLUDE_KEYWORDS if k in t), None)
+        if hit:
+            counts[hit] += 1
+        else:
+            kept.append(j)
+    return kept, counts
 
 
 def ai_related(job):
@@ -409,6 +430,8 @@ def main():
         j["ai_related"] = ai_related(j)
         j.pop("posted_ago", None) if j.get("posted_ago") is None else None
 
+    jobs, excluded = exclude_by_title(jobs)
+
     # banned-field self-check on serialized output
     blob = "\n".join(json.dumps(j, ensure_ascii=False) for j in jobs)
     leaked = [f for f in BANNED_FIELDS if f'"{f}"' in blob]
@@ -424,6 +447,8 @@ def main():
                                "official": len(of_raw)},
             "dedup": {"official_internal_merged": c_removed,
                       "structured_absorbed": b_absorbed},
+            "title_excluded": {"total": sum(excluded.values()),
+                               "by_keyword": dict(excluded)},
             "is_senior": dict(Counter(str(j["is_senior"]) for j in jobs)),
             "region": dict(Counter(j["region"] for j in jobs)),
             "ai_related": sum(1 for j in jobs if j["ai_related"]),
@@ -442,6 +467,7 @@ def main():
     # report
     print(f"read: linkedin={len(li_raw)} structured={len(st_raw)} official={len(of_raw)}")
     print(f"dedup: official internal removed={c_removed}, structured absorbed={b_absorbed}")
+    print(f"title-excluded: total={sum(excluded.values())} {dict(excluded)}")
     print(f"final jobs = {len(jobs)}")
     for k, v in meta["counts"].items():
         if k not in ("total", "by_source_read", "dedup"):
